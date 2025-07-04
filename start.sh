@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 export http_forward_grpc_host=0.0.0.0
