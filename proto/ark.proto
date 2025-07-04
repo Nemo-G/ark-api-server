@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package inference;
+
+// Containers to hold repeated fundamental values.
+message FloatList { repeated double values = 1; }
+
+message Int64List { repeated int64 values = 1; }
+
+message BytesList { repeated bytes values = 1; }
+
+message StringList { repeated string values = 1; }
+
+message Struct {
+    // Unordered map of dynamically typed values.
+    map<string, Value> fields = 1;
+}
+
+message ValueList { repeated Value values = 1; }
+
+message Int64Dict {
+    // Unordered map of dynamically typed values.
+    map<int64, Value> fields = 1;
+}
+
+// Container for non-sequential data.
+message Value {
+    oneof kind {
+        FloatList float_list = 1;
+        Int64List int64_list = 2;
+        BytesList bytes_list = 3;
+        float float_ = 4;
+        int64 int64_ = 5;
+        bytes bytes_ = 6;
+        StringList string_list = 7;
+        string string_ = 8;
+        Struct struct_ = 9;
+        ValueList value_list = 10;
+        Int64Dict int64_dict = 11;
+        bool bool_ = 12;
+    }
+}
+
+// Container for inference request.
+message InferenceRequest {
+    // Request ID.
+    string req_id = 1;
+    // Model Name.
+    string model_name = 2;
+    // Map from input key to value.
+    map<string, Value> inputs = 3;
+    // Method supports chat/tokenize/classification
+    string method = 4;
+}
+
+// Container for inference response.
+message InferenceResponse {
+    // Request ID.
+    string req_id = 1;
+    // Model Name.
+    string model_name = 2;
+    // Map from output key to value.
+    map<string, Value> outputs = 3;
+}
+
+// Represents the control type of a control request.
+enum ControlType {
+    // Synchronize multi-LoRAs for an multi-LoRA ark instance.
+    SyncMultiLoRAs = 0;
+    // Pull metrics from an ark instance.
+    PullMetrics = 1;
+    // Heath check an ark instance
+    HealthCheck = 2;
+    // Set expected data for pod
+    SetExpectedStatus = 3;
+    // Get current status
+    GetStatus = 4;
+    // Set pod metrics
+    SetMetrics = 5;
+}
+
+// Container for control request.
+message ControlRequest {
+    // Request ID.
+    string req_id = 1;
+    // Control Name.
+    string control_name = 2;
+    // Control Type.
+    // e.g., Currently supports SyncMultiLoRAs
+    ControlType control_type = 3;
+    // Map from input key to value.
+    // e.g., inputs for SyncMultiLoRAs as follows:
+    // {"version": 1, "data.lorax.path": "/x/y/z", "data.lorax.tag": "latest",
+    // "data.lorax.desired_status": "running"}
+    map<string, Value> inputs = 4;
+}
+
+// Container for control response.
+message ControlResponse {
+    // Request ID. Subject to ControlRequest.
+    string req_id = 1;
+    // Control Name. Subject to ControlRequest.
+    string control_name = 2;
+    // Control Type. Subject to ControlRequest.
+    ControlType control_type = 3;
+    // Map from output key to value.
+    // e.g., outputs for SyncMultiLoRAs as follows:
+    // {"pod_name": "s-20230727140752-w8dzh-556c856485-blwvv", "version": 1,
+    // "data.lorax.status": "excepiton", "data.lorax.message": "path is
+    // illegal"} "data.lorax.status" supports "running", "installing",
+    // "uninstalling", "exception"
+    map<string, Value> outputs = 4;
+}
+
+service Inference {
+    rpc Call(InferenceRequest) returns (InferenceResponse) {}
+    rpc StreamingCall(InferenceRequest) returns (stream InferenceResponse) {}
+    rpc Control(ControlRequest) returns (ControlResponse) {}
+    rpc DistributeCall(InferenceRequest) returns (InferenceResponse) {}
+}
