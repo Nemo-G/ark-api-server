@@ -129,6 +129,35 @@ def make_ark_req(args: ChatCompletionRequest) -> ark_pb2.InferenceRequest:
 
     return request
 
+@app.get("/v1/models")
+async def list_models():
+    current_time = int(time.time())
+    return JSONResponse(content={
+        "object": "list",
+        "data": [{
+            "id": "deepseek-r1-0528",
+            "object": "model",
+            "created": current_time,
+            "owned_by": "vllm",
+            "root": "deepseek-r1-0528",
+            "parent": None,
+            "max_model_len": 32768,
+            "permission": [{
+                "id": "modelperm-b8cb7504d81e4ee2a02e7e741696cb70",
+                "object": "model_permission",
+                "created": current_time,
+                "allow_create_engine": False,
+                "allow_sampling": True,
+                "allow_logprobs": True,
+                "allow_search_indices": False,
+                "allow_view": True,
+                "allow_fine_tuning": False,
+                "organization": "*",
+                "group": None,
+                "is_blocking": False
+            }]
+        }]
+    })
 
 @app.post("/v1/chat/completions")
 async def create_chat_completion(request: ChatCompletionRequest):
