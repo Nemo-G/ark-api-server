@@ -9,9 +9,7 @@ services:
     userns_mode: host
     privileged: true
     shm_size: 128g
-    stdin_open: true
-    tty: true
-    command: ["bash", "/app/prefiller-setup"]
+    command: ["/app/prefiller-setup.sh"]
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'private_xllm.bin' && (echo > /dev/tcp/localhost/62000) 2>/dev/null || exit 1"]
       interval: 30s
@@ -36,7 +34,7 @@ services:
       - /root/license.lic:/app/xllm/license.lic
       - /root/prefill_enc.env:/app/xllm/prefill_enc.env
       - /var/run/nvidia-topologyd/:/var/run/nvidia-topologyd/
-      - ./prefiller-setup:/app/prefiller-setup:ro
+      - ./prefiller-setup.sh:/app/prefiller-setup.sh
 
   decoder:
     image: iaas-gpu-cn-beijing.cr.volces.com/serving/xllm:private_xllm_th24_cu124_xperf_0609
@@ -46,13 +44,11 @@ services:
     userns_mode: host
     privileged: true
     shm_size: 128g
-    stdin_open: true
-    tty: true
-    command: ["bash", "/app/decoder-setup"]
+    command: ["/app/decoder-setup.sh"]
     environment:
-      - PREFILL_NODE_IP=${PREFILL_NODE_IP}
+      - PREFILL_NODE_IP=10.0.0.174
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'private_xllm.bin' && curl -f http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "pgrep -f 'private_xllm.bin' && (echo > /dev/tcp/localhost/62000) 2>/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,5 +71,17 @@ services:
       - /root/license.lic:/app/xllm/license.lic
       - /root/decode_enc.env:/app/xllm/decode_enc.env
       - /var/run/nvidia-topologyd/:/var/run/nvidia-topologyd/
-      - ./decoder-setup:/app/decoder-setup:ro
-      - .:/app/api-server:ro 
+      - ./decoder-setup.sh:/app/decoder-setup.sh
+  
+  api-server:
+    build: .
+    container_name: api-server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - HTTP_FORWARD_GRPC_HOST=14.103.119.135
+      - HTTP_FORWARD_GRPC_PORT=62000
+    volumes:
+      - .:/app
+    working_dir: /app

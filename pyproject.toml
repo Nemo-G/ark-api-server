@@ -1,0 +1,19 @@
+[project]
+name = "ark-http-proxy"
+version = "0.1.0"
+description = "HTTP proxy for ARK gRPC inference server"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "grpcio>=1.59.0",
+    "grpcio-tools>=1.59.0",
+    "sse-starlette>=1.8.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "openai>=1.0.0",
+    "typing-extensions>=4.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [] 
